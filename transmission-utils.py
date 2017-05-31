@@ -96,16 +96,25 @@ def main_tracker_list(announce_re_str):
     lannounce=set(lannounce)
     print(os.linesep.join(lannounce))
 
-def main_tracker_move(announce_re_str, new_announce):
+def main_tracker_move(announce_re_str, new_announce,
+                      dry_run, verbose, fullname):
     tc=get_client()
     lt = tc.get_torrents()
     announce_re=re.compile(announce_re_str)
     lannounce=[]
+    if verbose:
+        print("id", "file_name")
     for t in lt:
         announce=t._fields["trackers"].value[0]["announce"]
         if not announce_re.search(announce):
             continue
-        tc.change_torrent(t.id,trackerReplace=(0,new_announce))
+        if verbose:
+            if fullname:
+                print(t.id, t.name)
+            else:
+                print(t.id, t.name[:70])
+        if not dry_run:
+            tc.change_torrent(t.id,trackerReplace=(0,new_announce))
 
 if "__main__" == __name__:
     parser = argparse.ArgumentParser(description="tool to manage transmission")
@@ -131,12 +140,19 @@ if "__main__" == __name__:
     parser_tracker_move.add_argument('re', metavar='re', default=".*",
                                      type=str, help='regular expression')
     parser_tracker_move.add_argument("new_announce")
+    parser_tracker_move.add_argument("-n", "--dry_run", dest="dry_run",
+                                     action="store_true", default=False)
+    parser_tracker_move.add_argument("-v", "--verbose", dest="verbose",
+                                     action="store_true", default=False)
+    parser_tracker_move.add_argument("--fullname", dest="fullname",
+                                     action="store_true", default=False)
     args = parser.parse_args()
 
     if args.cmd == "tracker-list":
         main_tracker_list(args.re)
     if args.cmd == "tracker-move":
-        main_tracker_move(args.re, args.new_announce)
+        main_tracker_move(args.re, args.new_announce, args.dry_run, args.verbose,
+                          args.fullname)
 
 
     # # test the arguments
