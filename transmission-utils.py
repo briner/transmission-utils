@@ -13,6 +13,7 @@ except:
     print(" - python3 -m venv venv")
     print(" - source venv/bin/activate")
     print(" - pip install -r requirements.txt")
+    print("To debug install also:")
     print(" - pip install ipython")
     print("Exit !")
     sys.exit(1)
@@ -32,7 +33,7 @@ def get_client():
         sys.exit(1)
     return client
 
-# MOVE LOCATION
+# MOVE DIRECTORY
 
 def get_torrent_location(torrent):
     return torrent._fields["downloadDir"].value
@@ -48,7 +49,7 @@ def is_elligible_for_location_move(torrent, base_dir):
     return True
 
 
-def move_location(tc, torrent, cur_dir, new_dir):
+def move_directory(tc, torrent, cur_dir, new_dir):
     cur_location = get_torrent_location(torrent)
     first_file = torrent.files()[0]["name"]
     if not is_torrent_elligible(torrent, cur_dir):
@@ -77,12 +78,21 @@ def move_location(tc, torrent, cur_dir, new_dir):
 
 # MAIN
 
-def main_location_move(cur_base_dir, new_base_dir):
+def main_move_directory(cur_base_dir, new_base_dir):
+    # test the arguments
+    if not os.path.isdir(args.current_base_dir):
+        print("current_base_dir({}) must exist !".format(args.current_base_dir))
+        print("Exit !")
+        sys.exit(1)
+    if not os.path.isdir(args.new_base_dir):
+        print("new_base_dir({}) must exist !".format(args.new_base_dir))
+        print("Exit !")
+        sys.exit(1)
     tc=get_client()
     lt = tc.get_torrents()
     lt_in_base = [t for t in lt if is_elligible_for_location_move(t, cur_base_dir)]
     for t in lt_in_base:
-        move_location(tc, t, cur_base_dir, new_base_dir)
+        move_directory(tc, t, cur_base_dir, new_base_dir)
 
 def main_tracker_list(announce_re_str):
     tc=get_client()
@@ -120,8 +130,8 @@ if "__main__" == __name__:
     parser = argparse.ArgumentParser(description="tool to manage transmission")
     subparsers = parser.add_subparsers(help='sub-command help')
 
-    # location
-    parser_location= subparsers.add_parser('move-location', help='move location')
+    # move-dir
+    parser_location= subparsers.add_parser('move-directory', help='move directory')
     parser_location.add_argument("current_base_dir")
     parser_location.add_argument("new_base_dir")
 
@@ -148,21 +158,12 @@ if "__main__" == __name__:
                                      action="store_true", default=False)
     args = parser.parse_args()
 
-    if args.cmd == "tracker-list":
+    if not hasattr(args,"cmd"):
+        parser.print_usage()
+    elif args.cmd == "tracker-list":
         main_tracker_list(args.re)
-    if args.cmd == "tracker-move":
+    elif args.cmd == "tracker-move":
         main_tracker_move(args.re, args.new_announce, args.dry_run, args.verbose,
                           args.fullname)
-
-
-    # # test the arguments
-    # if not os.path.isdir(args.current_base_dir):
-    #     print("current_base_dir({}) must exist !".format(args.current_base_dir))
-    #     print("Exit !")
-    #     sys.exit(1)
-    # if not os.path.isdir(args.new_base_dir):
-    #     print("new_base_dir({}) must exist !".format(args.new_base_dir))
-    #     print("Exit !")
-    #     sys.exit(1)
-    #
-    # main(args.current_base_dir, args.new_base_dir)
+    elif args.cmd == "move-directory":
+        main_move_directory(args.current_base_dir, args.new_base_dir)
