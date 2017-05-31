@@ -7,7 +7,7 @@ This tool allow to:
 you to move your ~/torrent directory to (eg) /mnt/my_external_hd/torrent
 by asking transmission to do it. In that way, you keep you torrent alive.
 ```bash
-transmission move-directory  ~/torrent /mnt/my_external_hd/torrent
+./transmission move-directory  ~/torrent /mnt/my_external_hd/torrent
 ```
 
 * move a announce for the trackers. That way, if your favorite tracker
